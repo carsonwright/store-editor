@@ -41,5 +41,5 @@ Editor.setTimeout(function(){
     }
 
 
-    Edit.set()
+    Editor.set()
 }, 0)
