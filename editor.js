@@ -1,4 +1,4 @@
-Stores.edit = function(){
+Store.edit = function(){
   var Editor = window.open();
   Editor.Store = Store;
   Store.db.observable.on("update", function(){
