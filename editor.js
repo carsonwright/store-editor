@@ -17,8 +17,6 @@ Editor.document.body.innerHTML = html;
 
 Editor.$ = this.$
 Editor.setTimeout(function(){
-  Editor.$.get("https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.5.7/jsoneditor.js").then(function(){
-
     // create the editor
     var shouldUpdate = true
     var container = Editor.document.getElementById("jsoneditor");
@@ -40,7 +38,5 @@ Editor.setTimeout(function(){
         editor.set($.extend(true, {}, {}, Store.db.data))
       }
     }
-
-  })
 
 }, 0)
