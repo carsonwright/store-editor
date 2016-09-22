@@ -1,47 +1,67 @@
 
+var Editor = {};
 Store.editor = function(){
-  var Editor = window.open();
-  Editor.Store = Store;
-  Store.db.observable.on("update", function(){
-    Editor.setTimeout(function(){
-      Editor.set()
-    }, 0)
-  })
+  Editor = window.open();
 
-  html = "<html>";
-  html += "<head>";
-  html += "</head>";
-  html += "<body>";
-  html += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.5.7/jsoneditor.css"></style>';
-  html += '<div id="jsoneditor" style="width: 100%; height: 100%;"></div>';
-  html += '</body></html>';
-  Editor.document.body.innerHTML = html;
+  Editor.setDOM = function(){
+    var localWindow = this
+    html = "<html>";
+    html += "<head>";
+    html += "</head>";
+    html += "<body>";
+    html += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/5.5.7/jsoneditor.css"></style>';
+    html += '<div id="jsoneditor" style="width: 100%; height: 100%;"></div>';
+    html += '</body></html>';
+    this.document.body.innerHTML = html;
 
-  Editor.$ = this.$
-  Editor.setTimeout(function(){
-      // create the editor
-      var shouldUpdate = true
-      var container = Editor.document.getElementById("jsoneditor");
+    this.$ = this.opener.$
 
-      var options = {onChange: function(){
-        var data = editor.get()
-        shouldUpdate = false
-        Object.keys(data).forEach(function(key){
-          Store(key).set(data[key])
-        })
-        setTimeout(function(){
-          shouldUpdate = true
-        }, 2000)
-      }};
-      var editor = new JSONEditor(container, options);
+    localWindow.Store = this.opener.Store;
+    localWindow.JSONEditor = this.opener.JSONEditor;
 
-      Editor.set = function(){
-        if(shouldUpdate){
-          editor.set($.extend(true, {}, {}, Store.db.data))
+    // create the editor
+
+    var shouldUpdate = true
+    var container = localWindow.document.getElementById("jsoneditor");
+
+    var options = {onChange: function(){
+      var data = localWindow.editor.get()
+      shouldUpdate = false
+      Object.keys(data).forEach(function(key){
+        var sourceJSON = JSON.stringify(localWindow.Store(key).get())
+        var targetJSON = JSON.stringify(data[key])
+        if(sourceJSON != targetJSON){
+          localWindow.Store(key).set(data[key])
         }
+      })
+      setTimeout(function(){
+        shouldUpdate = true
+      }, 2000)
+    }};
+    this.editor = new localWindow.JSONEditor(container, options);
+
+    localWindow.set = function(){
+      console.log(shouldUpdate)
+      if(shouldUpdate){
+        localWindow.editor.set($.extend(true, {}, {}, localWindow.Store.db.data))
       }
+    }
 
+    localWindow.Store.db.observable.on("update", function(){
+      localWindow.set()
+    })
 
-      Editor.set()
-  }, 0)
+    localWindow.set()
+  }
+
+  Editor.setDOM()
+  $(window).on("unload", function(){
+    this.resetInterval = this.setInterval(function(){
+      if(this.Store != this.opener.Store && this.opener.Store){
+        this.setDOM();
+        this.clearInterval(this.resetInterval);
+      }
+    }.bind(this), 6000)
+  }.bind(Editor))
+
 }.bind(this)
